@@ -1,9 +1,15 @@
-async function whileWait(callback, interval = 300) {
-  if (!callback) return true
-  let isFinished = false
-  while (!isFinished) {
-    isFinished = await callback()
-    await waitTimeByNum(interval)
+async function whileWait(callbackList, interval = 300) {
+  if (!callbackList) return true
+  if(!Array.isArray(callbackList)) {
+    callbackList = [callbackList]
+  }
+  for(let i = 0; i < callbackList.length; i++) {
+    let isFinished = false
+    const callback = callbackList[i]
+    while (!isFinished) {
+      isFinished = await callback()
+      await waitTimeByNum(interval)
+    }
   }
 }
 
