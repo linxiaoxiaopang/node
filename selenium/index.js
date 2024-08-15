@@ -1,6 +1,7 @@
 const { Builder, By, Key, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 const path = require('path');
+const {whileWait, waitTimeByNum} = require('./utils');
 
 // 创建 WebDriver 实例
 (async function example() {
@@ -54,19 +55,28 @@ const path = require('path');
     // 查找 input 元素并输入文本
     let inputElement = await driver.findElement(By.css('.cate-and-search-component .search input'))
     await inputElement.sendKeys('haoma')
-    let isClicked = false
-    await new Promise(resolve => setTimeout(resolve, 500))
-    while (!isClicked) {
-      // 点击图片
-      await new Promise(resolve => setTimeout(resolve, 200))
-      try {
-        let img = await driver.findElement(By.css('.hover-pic-popup-component .autoImgComponent')) // 根据实际情况更改选择器
-        await img.click()
-        isClicked = true
-      } catch {
+    // let isClicked = false
+    // await new Promise(resolve => setTimeout(resolve, 500))
+    // while (!isClicked) {
+    //   // 点击图片
+    //   await new Promise(resolve => setTimeout(resolve, 200))
+    //   try {
+    //     let img = await driver.findElement(By.css('.hover-pic-popup-component .autoImgComponent')) // 根据实际情况更改选择器
+    //     await img.click()
+    //     isClicked = true
+    //   } catch {
+    //
+    //   }
+    // }
 
+    await whileWait(async () => {
+      try {
+        await driver.findElement(By.css('.loading-wrapper'))
+        return false
+      } catch {
+        return true
       }
-    }
+    })
 
     await new Promise(resolve => setTimeout(resolve, 20))
     // 查找所有具有相同 class 的元素
