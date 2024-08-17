@@ -63,9 +63,15 @@ function getSystemUrls(urlString) {
   }
 }
 
+//创建随机id
+function createRandomNum  () {
+  return Date.now().toString(16) + Math.random().toString(16).slice(2, 8)
+}
+
 module.exports = {
   whileWait,
   waitTimeByNum,
   parseUrl,
-  getSystemUrls
+  getSystemUrls,
+  createRandomNum
 }

@@ -2,15 +2,14 @@ const {Builder, By, Key, until} = require('selenium-webdriver')
 const chrome = require('selenium-webdriver/chrome')
 const {flatten, uniq, map, groupBy} = require('lodash')
 const path = require('path')
-const RE_DESIGN_URL = 'https://www.zhengdingyunshang.com/#/design/designContainer?protoId=1185&productId=4584166'
-const TEMPLATE_PICTURE_TITLE_ARR = ['ZJL2549', 'ZJL2552']
+const RE_DESIGN_URL = 'https://www.zhengdingyunshang.com/#/design/designContainer?protoId=72&productId=4584018'
+const TEMPLATE_PICTURE_TITLE_ARR = []
 const USER_NAME = 'superb'
 const USER_PASSWORD = '2022@zhengdingZD'
 
 // HBC_SMT4
 // 123456Bch9
-const picList = [['HBCS001108', 'ZJL2546'], ['ZJL2546', 'ZJL2545'], ['ZJL2545']]
-// const picList = [['ZJL2545'], ['ZJL2546'], ['ZJL2545']]
+const picList = [['76468770664341'], ['CT24081604'], ['081601m'], ['JYPAI1711']]
 const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./utils')
     // superb / 2022@zhengdingZD
     // 创建 WebDriver 实例
@@ -51,34 +50,11 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
            const fabricList = element.__vue__.fabricList
            return fabricList.map(item => {
             const canvas = item.canvas
-            const os = canvas.getObjects()
+            const os = canvas.getObjects().filter(item => item.type != 'group')
             return os.map(sItem => {
-             const infoArr = sItem.id.split('@')
-             const oWidth = infoArr[1]
-             const oHeight = infoArr[2]
-             const oId = infoArr[3]
-             const picTitle = sItem.picTitle
-             const width = sItem.width
-             const height = sItem.height
-             const left = sItem.left
-             const top = sItem.top
-             const scaleX = sItem.scaleX
-             const scaleY = sItem.scaleY
-             const flipX = sItem.flipX
-             const flipY = sItem.flipY
-             const angle = sItem.angle
-             const groupType = sItem.groupType
-             const afterScaleWidth = width * scaleX
-             const afterScaleHeight = height * scaleY    
-             console.log('groupType', groupType) 
-             
-             const option = {
-                originWidth: oWidth,
-                originHeight: oHeight,
-                afterScaleWidth,
-                afterScaleHeight,
-                id: oId,
-                title: picTitle,
+             console.log('sItem', sItem)
+             const {
+                picTitle
                 width,
                 height,
                 left,
@@ -87,16 +63,36 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
                 scaleY,
                 flipX,
                 flipY,
-                angle
+                angle,
+                groupType
+             } = sItem
+             const [, oWidth, oHeight, oId] = sItem.id.split('@')
+             const [afterScaleWidth, afterScaleHeight] = [oWidth * scaleX， oHeight * scaleY]
+              return {
+                originWidth: oWidth,
+                originHeight: oHeight,
+                afterScaleWidth,
+                afterScaleHeight,
+                id: oId,
+                picTitle
+                width,
+                height,
+                left,
+                top,
+                scaleX,
+                scaleY,
+                flipX,
+                flipY,
+                angle,
+                groupType
               }
-              if(groupType !== undefined)  {
-                option.groupType = groupType
-              }
-              return option
             })
            })
         `)
+        console.log('designData', designData)
         const designTitles = uniq(map(flatten(designData), 'title'))
+        console.log('designTitles', designTitles)
+        // console.log('designData', designData)
         await driver.get(urlList.topic)
         await waitTimeByNum(200)
         await driver.get(urlList.design)
@@ -185,6 +181,7 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
                if(formDesignTitles.length == 1) {
                   FROM_TEMPLATE_PICTURE_TITLE_ARR = formDesignTitles
                }
+               const formData = ${JSON.stringify(designData)}
                const formPicTitleList = ${JSON.stringify(picTitleList)}
                const pArr = []
                fabricList.map((item, index) => {
@@ -193,53 +190,44 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
                  os.map(o => {
                     canvas.remove(o)
                  })
-                 canvas.renderAll()
                  let rawOs = formData[index]
-                 const osPArr = rawOs.map(async rawO => {
-                   const fIndex = FROM_TEMPLATE_PICTURE_TITLE_ARR.findIndex(title => rawO.title == title)
+                 const p = rawOs.map(async rawO => {
+                   const fIndex = FROM_TEMPLATE_PICTURE_TITLE_ARR.findIndex(title => rawO.title)
                    if(fIndex < 0) return
                    const fTitle = formPicTitleList[fIndex]
-                   console.log('FROM_TEMPLATE_PICTURE_TITLE_ARR', FROM_TEMPLATE_PICTURE_TITLE_ARR)
-                   console.log('rawO.title', rawO.title)
-                   console.log('formPicTitleList', formPicTitleList)
-                   console.log('fTitle', fTitle)
                    const findO = os.find(o => o.picTitle == fTitle)
                    if(!findO) return
                    const o = await new Promise((resolve) => {
-                       findO.clone(
+                       canvas.clone(
+                            findO,
                             (cloneO) => {
                               resolve(cloneO)
                             }        
                        )              
                    })
-                   console.log('o', o)
-                   const infoArr = findO.id.split('@')
-                   const oWidth = infoArr[1]
-                   const oHeight = infoArr[2]
-                   const oId = infoArr[3].replace(/^_/, '')
-                   
+                   const [, oWidth, oHeight, oId] = o.id.split('@')
+                   const splitIds = activeObject.id.split('@').slice(1)
                    const newOId = \`${createRandomNum()}@\${oWidth}@\${oHeight}@_\${oId}\`
-                   console.log('newOId', newOId)
-                   const afterScaleWidth = rawO.afterScaleWidth
-                   const afterScaleHeight = rawO.afterScaleHeight
-                   const title = rawO.title
-                   const width = rawO.width
-                   const height = rawO.height
-                   const left = rawO.left
-                   const top = rawO.top
-                   const scaleX = rawO.scaleX
-                   const scaleY = rawO.scaleY
-                   const flipX = rawO.flipX
-                   const flipY = rawO.flipY
-                   const angle = rawO.angle
-                   const groupType = rawO.groupType
-                   const oScaleX = afterScaleWidth / o.width  
-                   const oScaleY = afterScaleHeight / o.height
-                   console.log('oScaleX', oScaleX)
-                   console.log('oScaleY', oScaleY)
+                   const {
+                        afterScaleWidth,
+                        afterScaleHeight
+                        picTitle
+                        width,
+                        height,
+                        left,
+                        top,
+                        scaleX,
+                        scaleY,
+                        flipX,
+                        flipY,
+                        angle,
+                        groupType
+                   } = rawO
+                   const oScaleX = afterScaleWidth / oWidth  
+                   const oScaleY = afterScaleHeight / oHeight  
                    o.setOptions({
                        id: newOId,
-                       picTitle: findO.picTitle,
+                       picTitle: o.picTitle,
                        left,
                        top,
                        scaleX: oScaleX,
@@ -249,16 +237,7 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
                        angle,
                        groupType
                    })
-                   pArr.push(...osPArr)
-                   return o
-                 })
-                 Promise.all(osPArr).then(res => {
-                    res.map(o => {
-                        canvas.add(o)
-                        canvas.renderAll()
-                    })
-                    canvas.renderAll()
-                    canvas.$cacheFrontDesignData = null
+                   pArr.push(p)
                  })
                })  
                return pArr
@@ -269,7 +248,9 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
             //下一步
             const nextStepBtn = await querySelector('.done-btn-wrapper .el-button--primary')
             nextStepBtn.click()
+
             await waitTimeByNum(200)
+
             //露白弹窗 继续定制
             const keepDesignBtn = await querySelector('.el-message-box__btns .el-button--default')
             if (keepDesignBtn) {
@@ -286,8 +267,6 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
                 }
                 return false
             })
-
-            // await waitTimeByNum(200000)
 
             //保存定制
             const saveBtn = await querySelector('.save-component-dialog_custom-class .el-button--primary')
@@ -318,11 +297,7 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
 
     async function querySelector(selector) {
         try {
-            const element = await driver.findElement(By.css(selector))
-            const isDisplayed = await element.isDisplayed()
-            if (!isDisplayed) return null
-            return element
-
+            return await driver.findElement(By.css(selector))
         } catch {
             console.log('获取不到元素')
             return null
@@ -351,7 +326,7 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
     }
 
     async function canvasRendered() {
-        await whileWait([async () => {
+        await whileWait(async () => {
             return await driver.executeScript(`
                 console.log('canvasRendered')
                 let element = document.querySelector('.designContainerPage')
@@ -361,15 +336,7 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
                 return !context.loading
             `
             )
-        }, async () => {
-            return await driver.executeScript(`
-                let element = document.querySelector('.designContainerPage')
-                if (!element) return false
-                const context = element.__vue__
-                return !context.calcProShowPicLock
-            `
-            )
-        }])
+        })
     }
 })()
 
