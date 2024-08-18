@@ -1,23 +1,14 @@
-const {Builder, By, Key, until} = require('selenium-webdriver')
+const {Builder, By} = require('selenium-webdriver')
 const chrome = require('selenium-webdriver/chrome')
-const {flatten, uniq, map, groupBy} = require('lodash')
-const path = require('path')
-// const RE_DESIGN_URL = 'https://www.zhengdingyunshang.com/#/design/designContainer?protoId=1185&productId=4584166'
-// const RE_DESIGN_URL = 'https://www.zhengdingyunshang.com/#/design/designContainer?protoId=444&productId=4552153'
-const RE_DESIGN_URL = 'https://www.zhengdingyunshang.com/#/design/designContainer?protoId=423'
-// const TEMPLATE_PICTURE_TITLE_ARR = ['ZJL2552', 'ZJL2549']
-const TEMPLATE_PICTURE_TITLE_ARR = []
+const {URL: RE_DESIGN_URL, TEMPLATE_PICTURE_TITLE_ARR, FILL_MODE, DESIGN_PICTURE_PATH} = require('./config')
+const {flatten, uniq, map, isEqual} = require('lodash')
+const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum, getPictureTitles, writeError, formatDate} = require('./utils')
+const picList = getPictureTitles(DESIGN_PICTURE_PATH)
+
 const RENDER_MODE = 'fill'
-const FILL_MODE = 'fill'
-const USER_NAME = 'superb'
-const USER_PASSWORD = '2022@zhengdingZD'
+
 const DESIGN_BY_SELF_LIST = [FILL_MODE]
-// HBC_SMT4
-// 123456Bch9
-// const picList = [['HBCS001108', 'ZJL2546'], ['ZJL2546', 'ZJL2545'], ['ZJL2545']]
-const picList = [['HBCA241119'], ['HBCA241118'], ['HBCA241117']]
-const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./utils')
-    // superb / 2022@zhengdingZD
+
     // 创建 WebDriver 实例
 ;(async function example() {
     // 设置 Chrome 浏览器选项
@@ -31,6 +22,7 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
         const urlList = getSystemUrls(RE_DESIGN_URL)
         // 打开网页
         await driver.get(urlList.login)
+        writeError(formatDate(new Date()))
         //登录
         // const userName = await querySelector('[uiid="zd-name"]')
         // userName.sendKeys(USER_NAME)
@@ -45,6 +37,7 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
         })
         let designData = []
         let designTitles = []
+
         if (!isDesignBySelf) {
             await driver.get(urlList.reDesign)
             await pageLoaded()
@@ -116,9 +109,22 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
 
         for (let i = 0; i < picList.length; i++) {
             const picTitleList = picList[i]
-            if (TEMPLATE_PICTURE_TITLE_ARR.length == 0 && picTitleList.length != 1) {
-                continue
+            if (!isDesignBySelf) {
+                if (designTitles.length > 1) {
+                    if (TEMPLATE_PICTURE_TITLE_ARR.length) {
+                        const isDiff = !isEqual(designTitles, TEMPLATE_PICTURE_TITLE_ARR)
+                        if (isDiff) {
+                            writeError(`TEMPLATE_PICTURE_TITLE_ARR:${TEMPLATE_PICTURE_TITLE_ARR},模板数据title:${designTitles}不一致`)
+                            return
+                        }
+                    }
+                    if (designTitles.length != picTitleList.length) {
+                        writeError(`待定制图片title:${picTitleList},模板数据title:${designTitles}数量不一致`)
+                        continue
+                    }
+                }
             }
+
             let designsEls = await querySelectorAll('.designContainerHeader .design')
             if (designsEls.length > 1) {
                 const chunkDesignEl = designsEls[1]
@@ -164,7 +170,10 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
                 await waitTimeByNum(20)
                 //点击图片
                 const img = await querySelector('.hover-pic-popup-component .autoImgComponent')
-                if (!img) continue
+                if (!img) {
+                    writeError(`${picTitle}图片不存在，已经被跳过定制。`)
+                    continue
+                }
                 await img.click()
                 await waitTimeByNum(20)
             }
@@ -205,6 +214,9 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
                    let FROM_TEMPLATE_PICTURE_TITLE_ARR = ${JSON.stringify(TEMPLATE_PICTURE_TITLE_ARR)}
                    if(formDesignTitles.length == 1) {
                       FROM_TEMPLATE_PICTURE_TITLE_ARR = formDesignTitles
+                   }
+                   if(!FROM_TEMPLATE_PICTURE_TITLE_ARR.length) {
+                      FROM_TEMPLATE_PICTURE_TITLE_ARR = formDesignTitles  
                    }
                    const formPicTitleList = ${JSON.stringify(picTitleList)}
                    const pArr = []
