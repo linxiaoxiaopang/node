@@ -2,11 +2,8 @@ const {Builder, By, Key, until} = require('selenium-webdriver')
 const chrome = require('selenium-webdriver/chrome')
 const {flatten, uniq, map, groupBy} = require('lodash')
 const path = require('path')
-// const RE_DESIGN_URL = 'https://www.zhengdingyunshang.com/#/design/designContainer?protoId=1185&productId=4584166'
-// const RE_DESIGN_URL = 'https://www.zhengdingyunshang.com/#/design/designContainer?protoId=444&productId=4552153'
-const RE_DESIGN_URL = 'https://www.zhengdingyunshang.com/#/design/designContainer?protoId=423'
-// const TEMPLATE_PICTURE_TITLE_ARR = ['ZJL2552', 'ZJL2549']
-const TEMPLATE_PICTURE_TITLE_ARR = []
+const RE_DESIGN_URL = 'https://www.zhengdingyunshang.com/#/design/designContainer?protoId=1185&productId=4584166'
+const TEMPLATE_PICTURE_TITLE_ARR = ['ZJL2552', 'ZJL2549']
 const RENDER_MODE = 'fill'
 const FILL_MODE = 'fill'
 const USER_NAME = 'superb'
@@ -14,8 +11,8 @@ const USER_PASSWORD = '2022@zhengdingZD'
 const DESIGN_BY_SELF_LIST = [FILL_MODE]
 // HBC_SMT4
 // 123456Bch9
-// const picList = [['HBCS001108', 'ZJL2546'], ['ZJL2546', 'ZJL2545'], ['ZJL2545']]
-const picList = [['HBCA241119'], ['HBCA241118'], ['HBCA241117']]
+const picList = [['HBCS001108', 'ZJL2546'], ['ZJL2546', 'ZJL2545'], ['ZJL2545']]
+// const picList = [['ZJL2545'], ['ZJL2546'], ['ZJL2545']]
 const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./utils')
     // superb / 2022@zhengdingZD
     // 创建 WebDriver 实例
@@ -43,13 +40,11 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
             console.log('currentUrl0 != currentUrl1', currentUrl0 != currentUrl1)
             return currentUrl0 != currentUrl1
         })
-        let designData = []
-        let designTitles = []
         if (!isDesignBySelf) {
             await driver.get(urlList.reDesign)
             await pageLoaded()
             await waitTimeByNum(3000)
-            designData = await driver.executeScript(`
+            const designData = await driver.executeScript(`
            let element = document.querySelector('.designContainerPage')
            console.log('element', element);
            const fabricList = element.__vue__.fabricList
@@ -105,7 +100,7 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
            })
         `)
             const designDataOsData = map(designData, 'os')
-            designTitles = uniq(map(flatten(designDataOsData), 'title'))
+            const designTitles = uniq(map(flatten(designDataOsData), 'title'))
             await driver.get(urlList.topic)
             await waitTimeByNum(200)
         }
@@ -293,36 +288,28 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
                    console.log('fabricList', fabricList)
                    for(let i = 0; i < fabricList.length; i++) {
                        const canvas = fabricList[i].canvas
-                       console.log('canvas', canvas)
                        context.knifeActiveIndex = \`\${i}\`
                        await new Promise((resolve) => {
                          setTimeout(() => {
                            resolve(true)
                          }, 200)
                        })
-                       console.log('await')
                        const os = canvas.getObjects()
                        for(let j = 0; j < os.length; j++) {
                          const o = os[j]
                          canvas.setActiveObject(o)
-                         await new Promise((resolve) => {
-                             setTimeout(() => {
-                               resolve(true)
-                             }, 50)
-                         })
-                         const fillBtn = document.querySelector('.iconfont.icon-shejiqi_puman')
+                         const fillBtn = document.querySelector('.iconfont .icon-shejiqi_puman’)
+                         console.log('fillBtn', fillBtn)
                          fillBtn.click()
                          await new Promise((resolve) => {
                              setTimeout(() => {
                                resolve(true)
                              }, 50)
                          })
-                         console.log('await1')
                        }
                        canvas.renderAll()
                    }
                 `)
-                await canvasRendered()
             }
 
             //下一步
@@ -346,7 +333,7 @@ const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum} = require('./ut
                 return false
             })
 
-            // await waitTimeByNum(200000)
+            await waitTimeByNum(200000)
 
             //保存定制
             const saveBtn = await querySelector('.save-component-dialog_custom-class .el-button--primary')
