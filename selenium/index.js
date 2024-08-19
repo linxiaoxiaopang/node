@@ -1,12 +1,17 @@
+const {URL: RE_DESIGN_URL, TEMPLATE_PICTURE_TITLE_ARR, FILL_MODE, DESIGN_PICTURE_PATH} = require(`F:\\work\\node\\selenium\\config.js`)
+const DIRECTORY = 'F:\\work\\node'
+const path = require('path')
 const {Builder, By} = require('selenium-webdriver')
 const chrome = require('selenium-webdriver/chrome')
-const {URL: RE_DESIGN_URL, TEMPLATE_PICTURE_TITLE_ARR, FILL_MODE, DESIGN_PICTURE_PATH} = require('./config')
 const {flatten, uniq, map, isEqual} = require('lodash')
 const {whileWait, waitTimeByNum, getSystemUrls, createRandomNum, getPictureTitles, writeError, formatDate} = require('./utils')
 const picList = getPictureTitles(DESIGN_PICTURE_PATH)
 
 const RENDER_MODE = 'fill'
-
+process.env.SE_MANAGER_PATH = `${DIRECTORY}\\selenium\\node_modules\\selenium-webdriver\\bin\\windows\\selenium-manager.exe`
+const newPath = `${DIRECTORY}\\selenium\\chromedriver-win64`
+process.env.PATH = `${newPath}${path.delimiter}${process.env.PATH}`
+console.log('process.env.PATH', process.env.PATH)
 const DESIGN_BY_SELF_LIST = [FILL_MODE]
 
     // 创建 WebDriver 实例
@@ -147,6 +152,7 @@ const DESIGN_BY_SELF_LIST = [FILL_MODE]
             let pictureTitleElement = await querySelector('.cate-and-search-component .search input')
             if (!pictureTitleElement) {
                 let searchIcon = await querySelector('.cate-and-search-component .el-icon-search')
+                console.log('searchIcon', searchIcon)
                 await searchIcon.click()
                 // 查找 input 元素并输入文本
                 pictureTitleElement = await querySelector('.cate-and-search-component .search input')
@@ -443,4 +449,3 @@ const DESIGN_BY_SELF_LIST = [FILL_MODE]
         }])
     }
 })()
-
